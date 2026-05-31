@@ -1,0 +1,15 @@
+# Normaliza line endings ao entrar no repo.
+* text=auto eol=lf
+
+# Arquivos que QUEBRAM se forem convertidos para CRLF.
+Makefile        text eol=lf
+*.sh            text eol=lf
+
+# PowerShell aceita ambos, mas LF mantém diffs limpos entre Win/Linux.
+*.ps1           text eol=lf
+
+# Binários — nunca normalizar.
+*.png           binary
+*.jpg           binary
+*.ico           binary
+*.svg           text eol=lf

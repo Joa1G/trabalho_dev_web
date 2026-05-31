@@ -1,0 +1,31 @@
+# Python / Django
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+db.sqlite3
+
+# uv
+.python-version
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Env
+.env
+.env.local
+*.env.local
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Docker (volumes ficam no daemon, mas overrides locais sim)
+docker-compose.override.yml

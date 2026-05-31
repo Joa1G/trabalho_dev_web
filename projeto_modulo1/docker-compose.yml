@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: modulo1_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-modulo1_alocacao}
+      POSTGRES_USER: ${DB_USER:-user_modulo1}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-senha123}
+      TZ: America/Sao_Paulo
+    ports:
+      - "${DB_HOST_PORT:-5432}:5432"
+    volumes:
+      - modulo1_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-user_modulo1} -d ${DB_NAME:-modulo1_alocacao}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  modulo1_pgdata:

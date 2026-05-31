@@ -1,0 +1,41 @@
+@import "@fontsource/open-sans/400.css";
+@import "@fontsource/open-sans/600.css";
+@import "@fontsource/open-sans/700.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tokens institucionais — IFAM (Manual da Marca).
+ * Cores oficiais imutáveis e mapeamento semântico (verde = primária, vermelho = destrutivo). */
+:root {
+  --ifam-verde: #2f9e41;
+  --ifam-vermelho: #cd191e;
+  --ifam-preto: #000000;
+
+  --color-primary: var(--ifam-verde);
+  --color-primary-hover: #25803a;
+  --color-primary-fg: #ffffff;
+
+  --color-destructive: var(--ifam-vermelho);
+  --color-destructive-hover: #a8141a;
+  --color-destructive-fg: #ffffff;
+
+  --color-fg: #111827;
+  --color-fg-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-bg: #f9fafb;
+  --color-surface: #ffffff;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Open Sans", system-ui, sans-serif;
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
