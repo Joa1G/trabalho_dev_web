@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
-.PHONY: help up down logs db-shell setup migrate seed seed-admin test backend front bootstrap reset
+.PHONY: help up down logs db-shell setup setup-local migrate seed seed-admin test backend front bootstrap reset
 
 help:  ## Lista os alvos disponíveis
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -17,7 +17,9 @@ logs:         ## Tail dos logs do Postgres
 db-shell:     ## psql dentro do container
 	docker-compose --env-file .env exec db psql -U user_modulo1 -d modulo1_alocacao
 
-setup: up migrate seed-admin  ## Setup completo: DB up + migrate + seed admin
+setup: up migrate seed-admin  ## Setup completo COM Docker: DB up + migrate + seed admin
+
+setup-local: migrate seed-admin  ## Setup SEM Docker: migrate + seed (banco já criado via pgAdmin — ver docs/SETUP_PGADMIN.md)
 
 migrate:      ## Aplica migrations (cria tabelas e seed dos 3 perfis)
 	cd backend && uv run python manage.py migrate

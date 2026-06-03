@@ -54,6 +54,31 @@ separadas.
 
 > **Sem WSL, sem Make, sem Git Bash.** Apenas Docker Desktop + uv + Node.
 
+## Setup SEM Docker (Postgres local + pgAdmin)
+
+Plano B para quando o Docker não estiver disponível na máquina (ex.: na
+avaliação). Em vez do Postgres em container, usa-se um **PostgreSQL instalado
+nativamente**, administrado pelo **pgAdmin**. O Django não muda — ele lê a
+conexão do `.env`; só apontamos `DB_HOST`/`DB_PORT` para o servidor local.
+
+**Tutorial passo a passo (com pgAdmin):** [`docs/SETUP_PGADMIN.md`](docs/SETUP_PGADMIN.md)
+
+Resumo:
+
+```bash
+# 1. Crie banco + usuário no Postgres local.
+#    - via pgAdmin (recomendado): siga docs/SETUP_PGADMIN.md
+#    - ou via psql:   psql -U postgres -h localhost -f scripts/init_db.sql
+# 2. Ajuste o .env apontando DB_HOST/DB_PORT para o Postgres local (padrão 5432).
+cp .env.example .env
+# 3. Migrate + seed (NÃO usa Docker):
+make setup-local
+# (Windows sem make: cd backend && uv sync && uv run python manage.py migrate
+#                     && uv run python manage.py seed_admin)
+```
+
+Depois suba `make backend` + `make front` normalmente.
+
 Login default: `admin@instituicao.edu.br` / `admin123`
 (sobrescreva via `DEV_ADMIN_EMAIL` / `DEV_ADMIN_PASSWORD` no `.env`).
 
