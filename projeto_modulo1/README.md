@@ -128,10 +128,21 @@ permission_classes = [IsFuncionario]
 
 ### Contrato HTTP
 
-`POST /api/auth/login/` — `{email, senha}` → `{access, refresh, usuario{id,email,perfil}}`
-`POST /api/auth/refresh/` — `{refresh}` → `{access}`
+| Método | Rota | Permissão | Corpo → Resposta |
+| :-- | :-- | :-- | :-- |
+| `POST` | `/api/auth/login/` | público | `{email, senha}` → `{access, refresh, usuario{id,email,perfil}}` |
+| `POST` | `/api/auth/refresh/` | público | `{refresh}` → `{access}` |
+| `POST` | `/api/auth/cadastro/` | público | `{email, senha}` → `201 {id, email}` (cria usuário **sem perfil**) |
+| `GET`  | `/api/perfis/` | Administrador | → `[{id, nome, descricao}]` |
+| `GET`  | `/api/usuarios/` | Administrador | → `[{id, email, perfil, perfil_id, ativo}]` |
+| `PATCH`| `/api/usuarios/<id>/perfil/` | Administrador | `{perfil: <uuid>\|null}` → usuário atualizado |
 
 Token de acesso: 2h. Token de refresh: 1 dia. Detalhes nos ADRs do CLAUDE.md.
+
+**Fluxo de cadastro + atribuição de perfil:** qualquer pessoa se auto-cadastra
+(`/api/auth/cadastro/`) e nasce com `perfil = null` — consegue logar mas não passa
+em nenhuma permission class de papel. Cabe ao **Administrador** atribuir o perfil
+via `PATCH /api/usuarios/<id>/perfil/` (tela "Usuários" no frontend).
 
 ---
 
@@ -155,9 +166,20 @@ Documentados aqui para a equipe e para o merge final:
    ao olhar do contrato (mesmo request/response) e está coberta pelos testes.
 4. **`SECRET_KEY` default >= 32 bytes** para silenciar `InsecureKeyLengthWarning`
    do PyJWT — não tem impacto no contrato.
-5. **shadcn/ui CLI não foi rodado**. Componentes `Button`, `Input`, `Label` foram
-   escritos diretamente com Tailwind, seguindo a estética shadcn. Se a turma
-   convergir para o CLI oficial, é trivial trocar (sem mudar consumidores).
+5. **shadcn/ui CLI não foi rodado**. Componentes `Button`, `Input`, `Label`,
+   `Select` foram escritos diretamente com Tailwind, seguindo a estética shadcn.
+   Se a turma convergir para o CLI oficial, é trivial trocar (sem mudar consumidores).
+6. **Cadastro público + atribuição de perfil dentro do app `autenticacao`**. O
+   CLAUDE.md (seção 3) coloca o *CRUD de usuários* no escopo do RF-02/RF-03. Para
+   destravar o fluxo ponta a ponta (tela de cadastro + painel do admin atribuindo
+   perfis) **sem depender da entrega de outro aluno**, adicionamos aqui apenas o
+   mínimo: auto-cadastro público (`CadastroView`), listagem de usuários e
+   atribuição de perfil — todos restritos por RBAC (`IsAdministrador`), exceto o
+   cadastro que é público por natureza. Não há edição/exclusão de usuários nem
+   gestão de professores/funcionários (isso continua sendo RF-02/RF-03). No merge
+   final, se o RF-02/RF-03 trouxer seu próprio cadastro, estes endpoints podem ser
+   reconciliados; o contrato de criação (`create_user` com `perfil=null`) permanece
+   compatível.
 
 ---
 
@@ -172,5 +194,8 @@ Documentados aqui para a equipe e para o merge final:
 - [x] Endpoint protegido sem token → `401`.
 - [x] Permission classes `IsProfessor`/`IsFuncionario`/`IsAdministrador` testadas.
 - [x] Front: login + token persistido + rota privada + interceptador de refresh.
-- [x] Suite de testes do backend passando (25/25, 98% cobertura).
+- [x] Suite de testes do backend passando (41/41, 99% cobertura).
+- [x] Auto-cadastro público (`POST /api/auth/cadastro/`) cria usuário sem perfil.
+- [x] Painel do Administrador lista usuários e atribui/remove perfil de acesso.
+- [x] Front: telas de Cadastro e de Usuários (admin), com gate de rota por papel.
 - [ ] E2E Cypress do fluxo de login — *pendente*, próxima entrega.

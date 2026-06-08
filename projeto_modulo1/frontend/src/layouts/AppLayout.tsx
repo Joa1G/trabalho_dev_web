@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, NavLink } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Brand } from "@/components/Brand";
 import { Button } from "@/components/ui/Button";
@@ -27,6 +27,36 @@ export default function AppLayout() {
             </span>
           </div>
           <div className="flex items-center gap-3">
+            <nav className="flex items-center gap-1">
+              <NavLink
+                to="/"
+                end
+                className={({ isActive }) =>
+                  `rounded-md px-3 py-1.5 text-sm font-medium ${
+                    isActive
+                      ? "bg-primary/10 text-primary-hover"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`
+                }
+              >
+                Início
+              </NavLink>
+              {usuario?.perfil === "Administrador" && (
+                <NavLink
+                  to="/usuarios"
+                  className={({ isActive }) =>
+                    `rounded-md px-3 py-1.5 text-sm font-medium ${
+                      isActive
+                        ? "bg-primary/10 text-primary-hover"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`
+                  }
+                >
+                  Usuários
+                </NavLink>
+              )}
+            </nav>
+            <span aria-hidden className="h-7 w-px bg-gray-300" />
             <div className="text-right text-sm">
               <div className="font-medium text-ifam-preto">{usuario?.email}</div>
               <div className="text-xs text-gray-500">{usuario?.perfil}</div>

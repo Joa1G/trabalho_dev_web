@@ -27,3 +27,12 @@ def professor(db, perfis, django_user_model):
         password=SENHA,
         perfil=perfis["Professor"],
     )
+
+
+@pytest.fixture
+def administrador(db, perfis, django_user_model):
+    return django_user_model.objects.create_user(
+        email="admin@inst.edu.br",
+        password=SENHA,
+        perfil=perfis["Administrador"],
+    )
