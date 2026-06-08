@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { atribuirPerfil, listarUsuarios } from "@/api/usuarios";
 import { listarPerfis } from "@/api/perfis";
 import type { PerfilAcesso, Usuario } from "@/types/auth";
+import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 
 const SEM_PERFIL = "__sem_perfil__";
@@ -15,6 +16,7 @@ export default function UsuariosPage() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [status, setStatus] = useState<Record<string, StatusLinha>>({});
+  const [busca, setBusca] = useState("");
 
   useEffect(() => {
     Promise.all([listarUsuarios(), listarPerfis()])
@@ -25,6 +27,15 @@ export default function UsuariosPage() {
       .catch(() => setErro("Não foi possível carregar os usuários."))
       .finally(() => setCarregando(false));
   }, []);
+
+  const termo = busca.trim().toLowerCase();
+  const usuariosFiltrados = termo
+    ? usuarios.filter(
+        (u) =>
+          u.email.toLowerCase().includes(termo) ||
+          (u.perfil ?? "sem perfil").toLowerCase().includes(termo),
+      )
+    : usuarios;
 
   async function onMudarPerfil(usuario: Usuario, valor: string) {
     const perfilId = valor === SEM_PERFIL ? null : valor;
@@ -62,7 +73,22 @@ export default function UsuariosPage() {
       {carregando ? (
         <p className="text-sm text-gray-500">Carregando...</p>
       ) : (
-        <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
+        <>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="relative w-full max-w-xs">
+              <Input
+                type="search"
+                placeholder="Buscar por e-mail ou perfil..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                aria-label="Buscar usuários"
+              />
+            </div>
+            <span className="whitespace-nowrap text-xs text-gray-400">
+              {usuariosFiltrados.length} de {usuarios.length}
+            </span>
+          </div>
+          <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-left text-gray-600">
@@ -73,7 +99,7 @@ export default function UsuariosPage() {
               </tr>
             </thead>
             <tbody>
-              {usuarios.map((u) => (
+              {usuariosFiltrados.map((u) => (
                 <tr key={u.id} className="border-b border-gray-100 last:border-0">
                   <td className="px-4 py-3 text-ifam-preto">{u.email}</td>
                   <td className="px-4 py-3">
@@ -115,19 +141,22 @@ export default function UsuariosPage() {
                   </td>
                 </tr>
               ))}
-              {usuarios.length === 0 && (
+              {usuariosFiltrados.length === 0 && (
                 <tr>
                   <td
                     colSpan={4}
                     className="px-4 py-6 text-center text-gray-400"
                   >
-                    Nenhum usuário cadastrado.
+                    {usuarios.length === 0
+                      ? "Nenhum usuário cadastrado."
+                      : "Nenhum usuário encontrado para a busca."}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
