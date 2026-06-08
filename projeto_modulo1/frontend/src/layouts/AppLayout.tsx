@@ -42,18 +42,32 @@ export default function AppLayout() {
                 Início
               </NavLink>
               {usuario?.perfil === "Administrador" && (
-                <NavLink
-                  to="/usuarios"
-                  className={({ isActive }) =>
-                    `rounded-md px-3 py-1.5 text-sm font-medium ${
-                      isActive
-                        ? "bg-primary/10 text-primary-hover"
-                        : "text-gray-600 hover:bg-gray-100"
-                    }`
-                  }
-                >
-                  Usuários
-                </NavLink>
+                <>
+                  <NavLink
+                    to="/usuarios"
+                    className={({ isActive }) =>
+                      `rounded-md px-3 py-1.5 text-sm font-medium ${
+                        isActive
+                          ? "bg-primary/10 text-primary-hover"
+                          : "text-gray-600 hover:bg-gray-100"
+                      }`
+                    }
+                  >
+                    Usuários
+                  </NavLink>
+                  <NavLink
+                    to="/perfis"
+                    className={({ isActive }) =>
+                      `rounded-md px-3 py-1.5 text-sm font-medium ${
+                        isActive
+                          ? "bg-primary/10 text-primary-hover"
+                          : "text-gray-600 hover:bg-gray-100"
+                      }`
+                    }
+                  >
+                    Perfis
+                  </NavLink>
+                </>
               )}
             </nav>
             <span aria-hidden className="h-7 w-px bg-gray-300" />

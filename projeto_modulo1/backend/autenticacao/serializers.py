@@ -60,6 +60,16 @@ class CadastroSerializer(serializers.ModelSerializer):
 
 
 class PerfilAcessoSerializer(serializers.ModelSerializer):
+    nome = serializers.CharField(
+        max_length=50,
+        validators=[
+            UniqueValidator(
+                queryset=PerfilAcesso.objects.all(),
+                message="Já existe um perfil com este nome.",
+            )
+        ],
+    )
+
     class Meta:
         model = PerfilAcesso
         fields = ["id", "nome", "descricao"]

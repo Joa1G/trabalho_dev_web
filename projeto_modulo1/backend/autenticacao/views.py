@@ -1,10 +1,15 @@
-from rest_framework import generics
+from django.db.models import ProtectedError
+from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .models import PerfilAcesso, Usuario
 from .permissions import IsAdministrador
+
+# Perfis semeados pela migration 0002, consumidos pelas permission classes
+# (IsAdministrador/IsProfessor/IsFuncionario). Não podem ser excluídos pela API.
+PERFIS_RESERVADOS = {"Administrador", "Professor", "Funcionario"}
 from .serializers import (
     AtribuirPerfilSerializer,
     CadastroSerializer,
@@ -25,12 +30,40 @@ class CadastroView(generics.CreateAPIView):
     permission_classes = [AllowAny]
 
 
-class PerfilAcessoListView(generics.ListAPIView):
-    """GET /api/perfis/ — lista os perfis disponíveis (popula o seletor do admin)."""
+class PerfilAcessoListCreateView(generics.ListCreateAPIView):
+    """GET  /api/perfis/ — lista os perfis disponíveis.
+    POST /api/perfis/ — cria um novo perfil de acesso (Administrador)."""
 
     queryset = PerfilAcesso.objects.order_by("nome")
     serializer_class = PerfilAcessoSerializer
     permission_classes = [IsAdministrador]
+
+
+class PerfilAcessoDeleteView(generics.DestroyAPIView):
+    """DELETE /api/perfis/<id>/ — exclui um perfil (Administrador).
+
+    Bloqueia a exclusão dos perfis reservados e dos perfis com usuários
+    vinculados (RN nº3, via PROTECT)."""
+
+    queryset = PerfilAcesso.objects.all()
+    serializer_class = PerfilAcessoSerializer
+    permission_classes = [IsAdministrador]
+
+    def destroy(self, request, *args, **kwargs):
+        perfil = self.get_object()
+        if perfil.nome in PERFIS_RESERVADOS:
+            return Response(
+                {"detail": "Os perfis padrão do sistema não podem ser excluídos."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            perfil.delete()
+        except ProtectedError:
+            return Response(
+                {"detail": "Não é possível excluir um perfil com usuários vinculados."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UsuarioListView(generics.ListAPIView):

@@ -4,6 +4,7 @@ import LoginPage from "@/pages/Login";
 import CadastroPage from "@/pages/Cadastro";
 import HomePage from "@/pages/Home";
 import UsuariosPage from "@/pages/Usuarios";
+import PerfisPage from "@/pages/Perfis";
 import SemPermissaoPage from "@/pages/SemPermissao";
 import AppLayout from "@/layouts/AppLayout";
 import { PrivateRoute } from "@/routes/PrivateRoute";
@@ -28,6 +29,14 @@ export default function App() {
             element={
               <PrivateRoute perfis={["Administrador"]}>
                 <UsuariosPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/perfis"
+            element={
+              <PrivateRoute perfis={["Administrador"]}>
+                <PerfisPage />
               </PrivateRoute>
             }
           />

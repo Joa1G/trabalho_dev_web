@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { atribuirPerfil, listarPerfis, listarUsuarios } from "@/api/usuarios";
+import { atribuirPerfil, listarUsuarios } from "@/api/usuarios";
+import { listarPerfis } from "@/api/perfis";
 import type { PerfilAcesso, Usuario } from "@/types/auth";
 import { Select } from "@/components/ui/Select";
 
