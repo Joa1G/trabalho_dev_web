@@ -15,7 +15,6 @@ from .serializers import (
     CadastroSerializer,
     LoginSerializer,
     PerfilAcessoSerializer,
-    SenhaResetSerializer,
     UsuarioCreateSerializer,
     UsuarioSerializer,
     UsuarioUpdateSerializer,
@@ -124,22 +123,6 @@ class UsuarioDetailView(generics.RetrieveUpdateDestroyAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         usuario.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class UsuarioSenhaView(generics.GenericAPIView):
-    """POST /api/usuarios/<id>/senha/ — Administrador redefine a senha do usuário."""
-
-    queryset = Usuario.objects.all()
-    serializer_class = SenhaResetSerializer
-    permission_classes = [IsAdministrador]
-
-    def post(self, request, *args, **kwargs):
-        usuario = self.get_object()
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        usuario.set_password(serializer.validated_data["senha"])
-        usuario.save(update_fields=["password"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

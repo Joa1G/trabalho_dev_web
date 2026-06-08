@@ -158,41 +158,6 @@ def test_editar_usuario_nao_admin_403(api, professor):
     assert resp.status_code == 403
 
 
-# ---- Redefinição de senha (POST /api/usuarios/<id>/senha/) ------------------
-
-def test_admin_reseta_senha(api, administrador, professor):
-    api.force_authenticate(user=administrador)
-    resp = api.post(
-        reverse("usuario-senha", args=[professor.id]),
-        {"senha": "outra_senha_forte_99"},
-        format="json",
-    )
-    assert resp.status_code == 204
-    professor.refresh_from_db()
-    assert professor.check_password("outra_senha_forte_99")
-    assert not professor.check_password(SENHA)
-
-
-def test_resetar_senha_curta_400(api, administrador, professor):
-    api.force_authenticate(user=administrador)
-    resp = api.post(
-        reverse("usuario-senha", args=[professor.id]),
-        {"senha": "123"},
-        format="json",
-    )
-    assert resp.status_code == 400
-
-
-def test_resetar_senha_nao_admin_403(api, professor):
-    api.force_authenticate(user=professor)
-    resp = api.post(
-        reverse("usuario-senha", args=[professor.id]),
-        {"senha": "nova_senha_segura"},
-        format="json",
-    )
-    assert resp.status_code == 403
-
-
 # ---- Exclusão (DELETE /api/usuarios/<id>/) ---------------------------------
 
 def test_admin_exclui_usuario(api, administrador, professor, django_user_model):

@@ -141,7 +141,6 @@ permission_classes = [IsFuncionario]
 | `GET`  | `/api/usuarios/<id>/` | Administrador | → usuário |
 | `PATCH`| `/api/usuarios/<id>/` | Administrador | `{email?, perfil?, ativo?, staff?}` → usuário (não pode auto-desativar) |
 | `DELETE` | `/api/usuarios/<id>/` | Administrador | → `204` (não pode excluir a própria conta) |
-| `POST` | `/api/usuarios/<id>/senha/` | Administrador | `{senha}` → `204` (redefine senha) |
 | `PATCH`| `/api/usuarios/<id>/perfil/` | Administrador | `{perfil: <uuid>\|null}` → usuário (atalho legado) |
 
 Token de acesso: 2h. Token de refresh: 1 dia. Detalhes nos ADRs do CLAUDE.md.
@@ -185,9 +184,8 @@ Documentados aqui para a equipe e para o merge final:
    RBAC (`IsAdministrador`), exceto o cadastro que é público por natureza. A
    exclusão de perfil respeita a RN nº3 (bloqueia perfis com usuários vinculados)
    e protege os 3 perfis padrão. **Por decisão explícita do projeto**, o painel do
-   Administrador foi estendido para ter paridade com o Django `/admin` no
-   gerenciamento de usuários: criar, editar (e-mail/perfil/`ativo`/`staff`),
-   redefinir senha e excluir, além de busca e filtros. Há salvaguardas para o
+   Administrador foi estendido no gerenciamento de usuários: criar, editar
+   (e-mail/perfil/`ativo`/`staff`) e excluir, além de busca e filtros. Há salvaguardas para o
    Administrador não desativar nem excluir a própria conta (anti-auto-bloqueio).
    Isso avança sobre o *CRUD de usuários* que o CLAUDE.md (seção 3) havia atribuído
    ao RF-02/RF-03; no merge final, reconciliar com a entrega desses RFs se houver
@@ -215,8 +213,8 @@ Documentados aqui para a equipe e para o merge final:
 - [x] Painel do Administrador lista usuários e atribui/remove perfil de acesso.
 - [x] Administrador cria/exclui perfis de acesso (`POST`/`DELETE /api/perfis/`),
       com bloqueio dos perfis padrão e dos perfis com usuários vinculados (RN nº3).
-- [x] Gerenciamento completo de usuários pelo Administrador (paridade com o
-      Django `/admin`): criar, ativar/desativar, definir staff, redefinir senha,
-      excluir, atribuir perfil, buscar e filtrar — com salvaguardas anti-auto-bloqueio.
+- [x] Gerenciamento de usuários pelo Administrador: criar, ativar/desativar,
+      definir staff, excluir, atribuir perfil, buscar e filtrar — com salvaguardas
+      anti-auto-bloqueio e diálogos de confirmação.
 - [x] Front: telas de Cadastro, Usuários e Perfis (admin), com gate de rota por papel.
 - [ ] E2E Cypress do fluxo de login — *pendente*, próxima entrega.

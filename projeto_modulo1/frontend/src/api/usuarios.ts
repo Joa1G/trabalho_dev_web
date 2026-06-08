@@ -22,14 +22,6 @@ export async function atualizarUsuario(
   return data;
 }
 
-/** Redefine a senha de um usuário — somente Administrador. */
-export async function resetarSenha(
-  usuarioId: string,
-  senha: string,
-): Promise<void> {
-  await api.post(`api/usuarios/${usuarioId}/senha/`, { senha });
-}
-
 /** Exclui um usuário — somente Administrador. */
 export async function excluirUsuario(usuarioId: string): Promise<void> {
   await api.delete(`api/usuarios/${usuarioId}/`);

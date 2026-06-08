@@ -9,6 +9,7 @@ import type { PerfilAcesso } from "@/types/auth";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 /** Perfis padrão semeados no backend — não podem ser excluídos. */
 const RESERVADOS = ["Administrador", "Professor", "Funcionario"];
@@ -24,7 +25,8 @@ export default function PerfisPage() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [excluindo, setExcluindo] = useState<string | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
+  const [paraExcluir, setParaExcluir] = useState<PerfilAcesso | null>(null);
 
   const {
     register,
@@ -71,15 +73,16 @@ export default function PerfisPage() {
     }
   }
 
-  async function onExcluir(perfil: PerfilAcesso) {
-    if (!window.confirm(`Excluir o perfil "${perfil.nome}"?`)) return;
+  async function confirmarExclusao() {
+    if (!paraExcluir) return;
     setErro(null);
     setFeedback(null);
-    setExcluindo(perfil.id);
+    setExcluindo(true);
     try {
-      await excluirPerfil(perfil.id);
-      setPerfis((ps) => ps.filter((p) => p.id !== perfil.id));
-      setFeedback(`Perfil "${perfil.nome}" excluído.`);
+      await excluirPerfil(paraExcluir.id);
+      setPerfis((ps) => ps.filter((p) => p.id !== paraExcluir.id));
+      setFeedback(`Perfil "${paraExcluir.nome}" excluído.`);
+      setParaExcluir(null);
     } catch (e) {
       if (e instanceof AxiosError && (e.response?.status === 409 || e.response?.status === 400)) {
         const detail = (e.response.data as { detail?: string })?.detail;
@@ -87,8 +90,9 @@ export default function PerfisPage() {
       } else {
         setErro("Não foi possível excluir este perfil.");
       }
+      setParaExcluir(null);
     } finally {
-      setExcluindo(null);
+      setExcluindo(false);
     }
   }
 
@@ -126,7 +130,7 @@ export default function PerfisPage() {
         <form
           noValidate
           onSubmit={handleSubmit(onSubmit)}
-          className="h-fit space-y-4 rounded-md border border-gray-200 bg-white p-5"
+          className="h-fit space-y-4 rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
         >
           <h2 className="text-sm font-semibold text-ifam-preto">Novo perfil</h2>
           <div className="space-y-1">
@@ -161,13 +165,13 @@ export default function PerfisPage() {
         </form>
 
         {/* Tabela de perfis existentes */}
-        <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
+        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
           {carregando ? (
             <p className="px-4 py-6 text-sm text-gray-500">Carregando...</p>
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50 text-left text-gray-600">
+                <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
                   <th className="px-4 py-3 font-medium">Nome</th>
                   <th className="px-4 py-3 font-medium">Descrição</th>
                   <th className="px-4 py-3 font-medium text-right">Ações</th>
@@ -179,7 +183,7 @@ export default function PerfisPage() {
                   return (
                     <tr
                       key={p.id}
-                      className="border-b border-gray-100 last:border-0 align-top"
+                      className="border-b border-gray-100 align-top transition-colors last:border-0 hover:bg-gray-50/60"
                     >
                       <td className="px-4 py-3 font-medium text-ifam-preto">
                         {p.nome}
@@ -198,8 +202,7 @@ export default function PerfisPage() {
                         {!reservado && (
                           <Button
                             variant="ghost"
-                            onClick={() => onExcluir(p)}
-                            loading={excluindo === p.id}
+                            onClick={() => setParaExcluir(p)}
                             className="h-8 px-2 text-destructive hover:bg-destructive/5"
                           >
                             Excluir
@@ -224,6 +227,22 @@ export default function PerfisPage() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={paraExcluir !== null}
+        title="Excluir perfil"
+        destructive
+        confirmLabel="Excluir"
+        loading={excluindo}
+        onConfirm={confirmarExclusao}
+        onCancel={() => setParaExcluir(null)}
+        description={
+          <>
+            Tem certeza que deseja excluir o perfil{" "}
+            <strong className="text-ifam-preto">{paraExcluir?.nome}</strong>?
+          </>
+        }
+      />
     </div>
   );
 }

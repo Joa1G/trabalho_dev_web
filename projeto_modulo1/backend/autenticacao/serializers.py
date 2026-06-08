@@ -156,13 +156,3 @@ class UsuarioUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
         fields = ["email", "perfil", "ativo", "staff"]
-
-
-class SenhaResetSerializer(serializers.Serializer):
-    """Redefinição de senha de um usuário pelo Administrador."""
-
-    senha = serializers.CharField(
-        write_only=True,
-        min_length=8,
-        error_messages={"min_length": "A senha deve ter ao menos 8 caracteres."},
-    )
