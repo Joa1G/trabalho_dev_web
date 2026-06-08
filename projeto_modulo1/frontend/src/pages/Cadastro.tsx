@@ -2,48 +2,63 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { AxiosError } from "axios";
 
-import { login } from "@/api/auth";
-import { useAuthStore } from "@/store/useAuthStore";
+import { cadastrar } from "@/api/auth";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Brand } from "@/components/Brand";
 
-const schema = z.object({
-  email: z.string().email("E-mail inválido"),
-  senha: z.string().min(1, "Senha é obrigatória"),
-});
+const schema = z
+  .object({
+    email: z.string().email("E-mail inválido"),
+    senha: z.string().min(8, "A senha deve ter ao menos 8 caracteres"),
+    confirmarSenha: z.string().min(1, "Confirme a senha"),
+  })
+  .refine((d) => d.senha === d.confirmarSenha, {
+    message: "As senhas não conferem",
+    path: ["confirmarSenha"],
+  });
 type FormData = z.infer<typeof schema>;
 
-export default function LoginPage() {
+export default function CadastroPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const loginStore = useAuthStore((s) => s.login);
   const [erroServidor, setErroServidor] = useState<string | null>(null);
-  const sucesso = (location.state as { sucesso?: string } | null)?.sucesso ?? null;
 
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
   async function onSubmit(data: FormData) {
     setErroServidor(null);
     try {
-      const resp = await login(data);
-      loginStore(resp);
-      const dest =
-        (location.state as { from?: string } | null)?.from ?? "/";
-      navigate(dest, { replace: true });
+      await cadastrar({ email: data.email, senha: data.senha });
+      navigate("/login", {
+        replace: true,
+        state: {
+          sucesso:
+            "Cadastro realizado! Faça login. Um administrador definirá seu perfil de acesso.",
+        },
+      });
     } catch (e) {
-      if (e instanceof AxiosError && e.response?.status === 401) {
-        setErroServidor("E-mail ou senha inválidos.");
-      } else if (e instanceof AxiosError && e.response?.status === 400) {
-        setErroServidor("Dados inválidos.");
+      if (e instanceof AxiosError && e.response?.status === 400) {
+        const dados = e.response.data as Record<string, string[] | string>;
+        if (dados?.email) {
+          setError("email", {
+            message: Array.isArray(dados.email) ? dados.email[0] : dados.email,
+          });
+        } else if (dados?.senha) {
+          setError("senha", {
+            message: Array.isArray(dados.senha) ? dados.senha[0] : dados.senha,
+          });
+        } else {
+          setErroServidor("Dados inválidos. Verifique os campos.");
+        }
       } else {
         setErroServidor("Não foi possível conectar ao servidor.");
       }
@@ -60,20 +75,11 @@ export default function LoginPage() {
           </p>
         </div>
         <h1 className="mb-1 text-center text-xl font-semibold text-ifam-preto">
-          Acessar o sistema
+          Criar conta
         </h1>
         <p className="mb-6 text-center text-sm text-gray-500">
-          Entre com suas credenciais institucionais
+          Cadastre-se com seu e-mail institucional
         </p>
-
-        {sucesso && (
-          <div
-            role="status"
-            className="mb-4 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm text-primary-hover"
-          >
-            {sucesso}
-          </div>
-        )}
 
         <form noValidate className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-1">
@@ -96,13 +102,30 @@ export default function LoginPage() {
             <Input
               id="senha"
               type="password"
-              autoComplete="current-password"
-              placeholder="••••••••"
+              autoComplete="new-password"
+              placeholder="mínimo de 8 caracteres"
               error={errors.senha?.message}
               {...register("senha")}
             />
             {errors.senha && (
               <p className="text-xs text-destructive">{errors.senha.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="confirmarSenha">Confirmar senha</Label>
+            <Input
+              id="confirmarSenha"
+              type="password"
+              autoComplete="new-password"
+              placeholder="••••••••"
+              error={errors.confirmarSenha?.message}
+              {...register("confirmarSenha")}
+            />
+            {errors.confirmarSenha && (
+              <p className="text-xs text-destructive">
+                {errors.confirmarSenha.message}
+              </p>
             )}
           </div>
 
@@ -116,17 +139,14 @@ export default function LoginPage() {
           )}
 
           <Button type="submit" loading={isSubmitting} className="w-full">
-            Entrar
+            Cadastrar
           </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-500">
-          Não tem conta?{" "}
-          <Link
-            to="/cadastro"
-            className="font-medium text-primary hover:underline"
-          >
-            Cadastre-se
+          Já tem conta?{" "}
+          <Link to="/login" className="font-medium text-primary hover:underline">
+            Entrar
           </Link>
         </p>
       </div>
