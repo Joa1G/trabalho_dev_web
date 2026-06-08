@@ -81,10 +81,11 @@ class UsuarioSerializer(serializers.ModelSerializer):
     perfil = serializers.SlugRelatedField(slug_field="nome", read_only=True)
     perfil_id = serializers.PrimaryKeyRelatedField(source="perfil", read_only=True)
     ativo = serializers.BooleanField(source="is_active", read_only=True)
+    staff = serializers.BooleanField(source="is_staff", read_only=True)
 
     class Meta:
         model = Usuario
-        fields = ["id", "email", "perfil", "perfil_id", "ativo"]
+        fields = ["id", "email", "perfil", "perfil_id", "ativo", "staff"]
 
 
 class AtribuirPerfilSerializer(serializers.ModelSerializer):
@@ -97,3 +98,71 @@ class AtribuirPerfilSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
         fields = ["perfil"]
+
+
+class UsuarioCreateSerializer(serializers.ModelSerializer):
+    """Criação de usuário pelo Administrador (e-mail + senha + perfil + flags)."""
+
+    email = serializers.EmailField(
+        max_length=100,
+        validators=[
+            UniqueValidator(
+                queryset=Usuario.objects.all(),
+                message="Já existe um usuário com este e-mail.",
+            )
+        ],
+    )
+    senha = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        error_messages={"min_length": "A senha deve ter ao menos 8 caracteres."},
+    )
+    perfil = serializers.PrimaryKeyRelatedField(
+        queryset=PerfilAcesso.objects.all(), allow_null=True, required=False
+    )
+    ativo = serializers.BooleanField(source="is_active", required=False, default=True)
+    staff = serializers.BooleanField(source="is_staff", required=False, default=False)
+
+    class Meta:
+        model = Usuario
+        fields = ["id", "email", "senha", "perfil", "ativo", "staff"]
+        read_only_fields = ["id"]
+
+    def create(self, validated_data):
+        senha = validated_data.pop("senha")
+        email = validated_data.pop("email")
+        return Usuario.objects.create_user(email=email, password=senha, **validated_data)
+
+
+class UsuarioUpdateSerializer(serializers.ModelSerializer):
+    """Edição de usuário pelo Administrador (e-mail, perfil e flags de status)."""
+
+    email = serializers.EmailField(
+        max_length=100,
+        required=False,
+        validators=[
+            UniqueValidator(
+                queryset=Usuario.objects.all(),
+                message="Já existe um usuário com este e-mail.",
+            )
+        ],
+    )
+    perfil = serializers.PrimaryKeyRelatedField(
+        queryset=PerfilAcesso.objects.all(), allow_null=True, required=False
+    )
+    ativo = serializers.BooleanField(source="is_active", required=False)
+    staff = serializers.BooleanField(source="is_staff", required=False)
+
+    class Meta:
+        model = Usuario
+        fields = ["email", "perfil", "ativo", "staff"]
+
+
+class SenhaResetSerializer(serializers.Serializer):
+    """Redefinição de senha de um usuário pelo Administrador."""
+
+    senha = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        error_messages={"min_length": "A senha deve ter ao menos 8 caracteres."},
+    )

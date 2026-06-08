@@ -34,4 +34,22 @@ export interface Usuario {
   perfil: string | null;
   perfil_id: string | null;
   ativo: boolean;
+  staff: boolean;
+}
+
+/** Payload de criação de usuário pelo Administrador. */
+export interface NovoUsuario {
+  email: string;
+  senha: string;
+  perfil?: string | null;
+  ativo?: boolean;
+  staff?: boolean;
+}
+
+/** Campos editáveis de um usuário pelo Administrador (todos opcionais). */
+export interface PatchUsuario {
+  email?: string;
+  perfil?: string | null;
+  ativo?: boolean;
+  staff?: boolean;
 }

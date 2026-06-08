@@ -15,7 +15,10 @@ from .serializers import (
     CadastroSerializer,
     LoginSerializer,
     PerfilAcessoSerializer,
+    SenhaResetSerializer,
+    UsuarioCreateSerializer,
     UsuarioSerializer,
+    UsuarioUpdateSerializer,
 )
 
 
@@ -66,12 +69,78 @@ class PerfilAcessoDeleteView(generics.DestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class UsuarioListView(generics.ListAPIView):
-    """GET /api/usuarios/ — lista os usuários para o painel do Administrador."""
+class UsuarioListCreateView(generics.ListCreateAPIView):
+    """GET  /api/usuarios/ — lista os usuários (Administrador).
+    POST /api/usuarios/ — cria um usuário com e-mail/senha/perfil/flags."""
 
     queryset = Usuario.objects.select_related("perfil").order_by("email")
-    serializer_class = UsuarioSerializer
     permission_classes = [IsAdministrador]
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return UsuarioCreateSerializer
+        return UsuarioSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        usuario = serializer.save()
+        return Response(UsuarioSerializer(usuario).data, status=status.HTTP_201_CREATED)
+
+
+class UsuarioDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """GET/PATCH/DELETE /api/usuarios/<id>/ — detalhe, edição e exclusão (Administrador).
+
+    Salvaguardas: o Administrador não pode desativar nem excluir a própria conta
+    (evita auto-bloqueio)."""
+
+    queryset = Usuario.objects.select_related("perfil")
+    permission_classes = [IsAdministrador]
+    http_method_names = ["get", "patch", "delete", "options"]
+
+    def get_serializer_class(self):
+        if self.request.method == "PATCH":
+            return UsuarioUpdateSerializer
+        return UsuarioSerializer
+
+    def patch(self, request, *args, **kwargs):
+        usuario = self.get_object()
+        if usuario.pk == request.user.pk and request.data.get("ativo") is False:
+            return Response(
+                {"detail": "Você não pode desativar a própria conta."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = self.get_serializer(usuario, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        usuario.refresh_from_db()
+        return Response(UsuarioSerializer(usuario).data)
+
+    def destroy(self, request, *args, **kwargs):
+        usuario = self.get_object()
+        if usuario.pk == request.user.pk:
+            return Response(
+                {"detail": "Você não pode excluir a própria conta."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        usuario.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UsuarioSenhaView(generics.GenericAPIView):
+    """POST /api/usuarios/<id>/senha/ — Administrador redefine a senha do usuário."""
+
+    queryset = Usuario.objects.all()
+    serializer_class = SenhaResetSerializer
+    permission_classes = [IsAdministrador]
+
+    def post(self, request, *args, **kwargs):
+        usuario = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        usuario.set_password(serializer.validated_data["senha"])
+        usuario.save(update_fields=["password"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UsuarioPerfilView(generics.UpdateAPIView):

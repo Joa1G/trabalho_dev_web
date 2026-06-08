@@ -1,5 +1,5 @@
 import { api } from "@/api/client";
-import type { Usuario } from "@/types/auth";
+import type { NovoUsuario, PatchUsuario, Usuario } from "@/types/auth";
 
 /** Lista todos os usuários (somente Administrador). */
 export async function listarUsuarios(): Promise<Usuario[]> {
@@ -7,14 +7,30 @@ export async function listarUsuarios(): Promise<Usuario[]> {
   return data;
 }
 
-/** Atribui (ou remove, com `null`) o perfil de um usuário. */
-export async function atribuirPerfil(
-  usuarioId: string,
-  perfilId: string | null,
-): Promise<Usuario> {
-  const { data } = await api.patch<Usuario>(
-    `api/usuarios/${usuarioId}/perfil/`,
-    { perfil: perfilId },
-  );
+/** Cria um usuário (e-mail/senha/perfil/flags) — somente Administrador. */
+export async function criarUsuario(body: NovoUsuario): Promise<Usuario> {
+  const { data } = await api.post<Usuario>("api/usuarios/", body);
   return data;
+}
+
+/** Atualiza campos de um usuário (e-mail, perfil, ativo, staff). */
+export async function atualizarUsuario(
+  usuarioId: string,
+  patch: PatchUsuario,
+): Promise<Usuario> {
+  const { data } = await api.patch<Usuario>(`api/usuarios/${usuarioId}/`, patch);
+  return data;
+}
+
+/** Redefine a senha de um usuário — somente Administrador. */
+export async function resetarSenha(
+  usuarioId: string,
+  senha: string,
+): Promise<void> {
+  await api.post(`api/usuarios/${usuarioId}/senha/`, { senha });
+}
+
+/** Exclui um usuário — somente Administrador. */
+export async function excluirUsuario(usuarioId: string): Promise<void> {
+  await api.delete(`api/usuarios/${usuarioId}/`);
 }

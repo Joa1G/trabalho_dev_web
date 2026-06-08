@@ -16,10 +16,13 @@ def test_listar_usuarios_como_admin(api, administrador, professor):
     assert {administrador.email, professor.email} <= emails
 
     prof_row = next(u for u in resp.json() if u["email"] == professor.email)
-    assert set(prof_row.keys()) == {"id", "email", "perfil", "perfil_id", "ativo"}
+    assert set(prof_row.keys()) == {
+        "id", "email", "perfil", "perfil_id", "ativo", "staff",
+    }
     assert prof_row["perfil"] == "Professor"
     assert prof_row["perfil_id"] == str(professor.perfil_id)
     assert prof_row["ativo"] is True
+    assert prof_row["staff"] is False
 
 
 def test_listar_usuarios_perfil_nulo_aparece(api, administrador, django_user_model):

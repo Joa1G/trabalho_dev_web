@@ -136,8 +136,13 @@ permission_classes = [IsFuncionario]
 | `GET`  | `/api/perfis/` | Administrador | → `[{id, nome, descricao}]` |
 | `POST` | `/api/perfis/` | Administrador | `{nome, descricao?}` → `201 {id, nome, descricao}` |
 | `DELETE` | `/api/perfis/<id>/` | Administrador | → `204` (`400` se reservado · `409` se houver usuários vinculados) |
-| `GET`  | `/api/usuarios/` | Administrador | → `[{id, email, perfil, perfil_id, ativo}]` |
-| `PATCH`| `/api/usuarios/<id>/perfil/` | Administrador | `{perfil: <uuid>\|null}` → usuário atualizado |
+| `GET`  | `/api/usuarios/` | Administrador | → `[{id, email, perfil, perfil_id, ativo, staff}]` |
+| `POST` | `/api/usuarios/` | Administrador | `{email, senha, perfil?, ativo?, staff?}` → `201` usuário |
+| `GET`  | `/api/usuarios/<id>/` | Administrador | → usuário |
+| `PATCH`| `/api/usuarios/<id>/` | Administrador | `{email?, perfil?, ativo?, staff?}` → usuário (não pode auto-desativar) |
+| `DELETE` | `/api/usuarios/<id>/` | Administrador | → `204` (não pode excluir a própria conta) |
+| `POST` | `/api/usuarios/<id>/senha/` | Administrador | `{senha}` → `204` (redefine senha) |
+| `PATCH`| `/api/usuarios/<id>/perfil/` | Administrador | `{perfil: <uuid>\|null}` → usuário (atalho legado) |
 
 Token de acesso: 2h. Token de refresh: 1 dia. Detalhes nos ADRs do CLAUDE.md.
 
@@ -179,8 +184,15 @@ Documentados aqui para a equipe e para o merge final:
    atribuição de perfil e gestão de perfis (criar/excluir) — todos restritos por
    RBAC (`IsAdministrador`), exceto o cadastro que é público por natureza. A
    exclusão de perfil respeita a RN nº3 (bloqueia perfis com usuários vinculados)
-   e protege os 3 perfis padrão. Não há edição/exclusão de usuários nem
-   gestão de professores/funcionários (isso continua sendo RF-02/RF-03). No merge
+   e protege os 3 perfis padrão. **Por decisão explícita do projeto**, o painel do
+   Administrador foi estendido para ter paridade com o Django `/admin` no
+   gerenciamento de usuários: criar, editar (e-mail/perfil/`ativo`/`staff`),
+   redefinir senha e excluir, além de busca e filtros. Há salvaguardas para o
+   Administrador não desativar nem excluir a própria conta (anti-auto-bloqueio).
+   Isso avança sobre o *CRUD de usuários* que o CLAUDE.md (seção 3) havia atribuído
+   ao RF-02/RF-03; no merge final, reconciliar com a entrega desses RFs se houver
+   sobreposição. Gestão de dados específicos de professor/funcionário continua
+   fora do RF-01. No merge
    final, se o RF-02/RF-03 trouxer seu próprio cadastro, estes endpoints podem ser
    reconciliados; o contrato de criação (`create_user` com `perfil=null`) permanece
    compatível.
@@ -203,5 +215,8 @@ Documentados aqui para a equipe e para o merge final:
 - [x] Painel do Administrador lista usuários e atribui/remove perfil de acesso.
 - [x] Administrador cria/exclui perfis de acesso (`POST`/`DELETE /api/perfis/`),
       com bloqueio dos perfis padrão e dos perfis com usuários vinculados (RN nº3).
+- [x] Gerenciamento completo de usuários pelo Administrador (paridade com o
+      Django `/admin`): criar, ativar/desativar, definir staff, redefinir senha,
+      excluir, atribuir perfil, buscar e filtrar — com salvaguardas anti-auto-bloqueio.
 - [x] Front: telas de Cadastro, Usuários e Perfis (admin), com gate de rota por papel.
 - [ ] E2E Cypress do fluxo de login — *pendente*, próxima entrega.
